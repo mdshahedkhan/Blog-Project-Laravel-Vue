@@ -40,4 +40,5 @@ Route::prefix('/post')->group(function () {
     Route::post('/manage', [PostController::class, 'index']);
     Route::post('/filter', [PostController::class, 'Filter_Post']);
     Route::post('/destroy', [PostController::class, 'Destroy']);
+    Route::post('/status', [PostController::class, 'Status']);
 });

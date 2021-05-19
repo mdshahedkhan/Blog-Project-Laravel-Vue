@@ -82,7 +82,7 @@
                             <tr>
                                 <th>
                                     <div class="icheck-info d-inline">
-                                        <input type="checkbox" id="checkAll" @click="SelectedAll">
+                                        <input type="checkbox" id="checkAll" @click="SelectedAll" v-bind:disabled="isEmptyData(GetRenderAllPosts)" v-model="SelectAll">
                                         <label for="checkAll"></label>
                                     </div>
                                 </th>
@@ -99,16 +99,17 @@
                             <tr v-for="(row, index) in GetRenderAllPosts" :key="index">
                                 <td>
                                     <div class="icheck-info d-inline">
-                                        <input type="checkbox" name="checked" :checked="selected" :id="index" v-model="selected">
+                                        <input type="checkbox" name="checked" :checked="SelectAll" :id="index" :value="row.id" v-model="selected">
                                         <label :for="index"></label>
                                     </div>
                                 </td>
-                                <td>{{ index }}</td>
+                                <td>{{ index + 1 }}</td>
                                 <td><img width="60px" :src="row.image" alt=""></td>
                                 <td>{{ row.title }}</td>
                                 <td>{{ row.category.name }}</td>
                                 <td>{{ row.user.name }}</td>
-                                <td>{{ row.description | subString(30) }} ...</td>
+                                <td>{{ row.description | subString(30) }}</td>
+                                <td><span class="badge " :class="StatusColorType(row.status)">{{ row.status | StatusType }}</span></td>
                                 <td class="d-flex">
                                     <router-link to="null" class="btn btn-success btn-xs mr-1"><i class="fa fa-edit"></i></router-link>
                                     <button type="button" @click="removePost(row.id)" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>
@@ -117,16 +118,30 @@
                             <tr v-if="isEmptyData(GetRenderAllPosts)">
                                 <td colspan="10" class="text-danger text-center text-bold">Data Not Found!.</td>
                             </tr>
+                            <tr v-if="selected.length > 0 ? true:false">
+                                <td colspan="10">
+                                    <div>
+                                        <button :disabled="!SelectAll" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
+                                                data-toggle="dropdown" aria-expanded="false">Action
+                                        </button>
+                                        <div class="dropdown-menu" style="">
+                                            <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'active')">Active</button>
+                                            <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'inactive')">Inactive</button>
+                                            <button @click="removePost(selected)" class="dropdown-item">Delete</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                         <tbody v-if="!TableShow">
                             <tr v-for="(row, index) in FilterPost" :key="index">
                                 <td>
                                     <div class="icheck-info d-inline">
-                                        <input type="checkbox" name="checked" :checked="selected" :id="index" v-model="selected">
+                                        <input type="checkbox" name="checked" :checked="SelectAll" :value="row.id" :id="index" v-model="selected">
                                         <label :for="index"></label>
                                     </div>
                                 </td>
-                                <td>{{ index }}</td>
+                                <td>{{ index + 1 }}</td>
                                 <td><img width="60px" :src="row.image" alt=""></td>
                                 <td>{{ row.title }}</td>
                                 <td>{{ row.category.name }}</td>
@@ -162,6 +177,7 @@ export default {
             FilterPost: [],
             Search: null,
             orderBy: null,
+            SelectAll: false,
         }
     },
     mounted() {
@@ -176,21 +192,37 @@ export default {
             return this.$store.getters.RenderCategories;
         }
     },
-
+    watch: {
+        SelectAllTRUE() {
+            return this.SelectAll = (this.selected.length === this.GetRenderAllPosts.length);
+        }
+    },
     methods: {
+        StatusColorType(type) {
+            const ColorType = {
+                'active': 'bg-success',
+                'inactive': 'bg-danger',
+            }
+            return ColorType[type]
+        },
         removePost(id) {
             const thiWindow = this
             this.confirm(function () {
                 axios.post('/post/destroy', { items: [id] }).then(function (response) {
                     toastr.success(response.data.success);
+                    thiWindow.SelectAll = false;
                     thiWindow.$store.dispatch('RenderAllPost');
                 });
             });
         },
-        SelectedAll(selected) {
-            return this.GetRenderAllPosts.forEach((post) => {
-                selected.push(post.id);
-            })
+        SelectedAll(event) {
+            if (event.target.checked == false) {
+                this.selected = [];
+            } else {
+                this.GetRenderAllPosts.forEach(post => {
+                    this.selected.push(post.id);
+                });
+            }
         },
         postOrderBy() {
             const thisWindow = this;
@@ -230,6 +262,14 @@ export default {
                 thisWindow.FilterPost = [];
             }
 
+        },
+        ActiveInactiveItems(values, type) {
+            const thiWindow = this;
+            axios.post('/post/status', { items: [values], type: type }).then(function (response) {
+                toastr.success(response.data.success);
+                thiWindow.SelectAll = false;
+                thiWindow.$store.dispatch('RenderAllPost');
+            });
         },
         isEmptyData(data) {
             return (data.length < 1);

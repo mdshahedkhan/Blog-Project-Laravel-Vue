@@ -35,10 +35,13 @@ class PostController extends Controller
                 })->get();
             }
         }
-
         return response()->json(['post' => $Post], 200);
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function Destroy(Request $request)
     {
         if ($request->items) {
@@ -50,4 +53,17 @@ class PostController extends Controller
             return response()->json(['success' => 'Yah! ' . $i . ' post has been successfully deleted.']);
         }
     }
+
+    public function Status(Request $request)
+    {
+        $i = 0;
+        foreach ($request->items as $item) {
+            $Post         = Post::find($item)->first();
+            $Post->status = $request->type;
+            $Post->save();
+            $i++;
+        }
+        return response()->json(['success' => 'Yah! ' . $i . ' post has been successfully ' . $request->type . '.']);
+    }
+
 }

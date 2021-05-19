@@ -20,6 +20,13 @@ Vue.filter('StatusColorType', function (value) {
     }
     return Status[value];
 })
+Vue.filter('StatusType', function (value) {
+    const Status = {
+        active: 'Active',
+        inactive: 'Inactive'
+    }
+    return Status[value];
+})
 Vue.filter('Capitalize', function (String) {
     return String.charAt(0).toUpperCase() + String.slice(1);
 })
