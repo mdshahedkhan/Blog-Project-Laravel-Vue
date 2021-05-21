@@ -25,7 +25,7 @@
                 <div class="card-header bg-info">
                     <h3 class="card-title mt-2">All Posts</h3>
                     <div class="card-tools">
-                        <router-link to="/post/add" class="btn btn-block btn-info"><i class="fa fa-plus-circle"></i> Add Post</router-link>
+                        <router-link :to="{ name: 'add-post' }" class="btn btn-block btn-info"><i class="fa fa-plus-circle"></i> Add Post</router-link>
                     </div>
                 </div>
                 <div class="row">
@@ -55,7 +55,7 @@
                                         <select id="category" @change="searchCategoryPost" v-model="categoryWaysPostName" class="form-control">
                                             <option selected style="display: none">Select</option>
                                             <option value="All-category">All Category Post</option>
-                                            <option v-for="(category ,index) in RenderAllCategory" :value="category.id">{{ category.name }}</option>
+                                            <option v-for="(category ,index) in RenderAllCategory" :key="index" :value="category.id">{{ category.name }}</option>
                                         </select>
                                     </div> <!-- form group [order by] -->
                                     <div class="form-group p-1">
@@ -121,7 +121,7 @@
                             <tr v-if="selected.length > 0 ? true:false">
                                 <td colspan="10">
                                     <div>
-                                        <button :disabled="!SelectAll" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
+                                        <button :disabled="!GetRenderAllPosts" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
                                                 data-toggle="dropdown" aria-expanded="false">Action
                                         </button>
                                         <div class="dropdown-menu" style="">
@@ -137,7 +137,7 @@
                             <tr v-for="(row, index) in FilterPost" :key="index">
                                 <td>
                                     <div class="icheck-info d-inline">
-                                        <input type="checkbox" name="checked" :checked="SelectAll" :value="row.id" :id="index" v-model="selected">
+                                        <input type="checkbox" name="checked" :checked="SelectAll" :id="index" :value="row.id" v-model="selected">
                                         <label :for="index"></label>
                                     </div>
                                 </td>
@@ -146,7 +146,8 @@
                                 <td>{{ row.title }}</td>
                                 <td>{{ row.category.name }}</td>
                                 <td>{{ row.user.name }}</td>
-                                <td>{{ row.description | subString(30) }} ...</td>
+                                <td>{{ row.description | subString(30) }}</td>
+                                <td><span class="badge " :class="StatusColorType(row.status)">{{ row.status | StatusType }}</span></td>
                                 <td class="d-flex">
                                     <router-link to="null" class="btn btn-success btn-xs mr-1"><i class="fa fa-edit"></i></router-link>
                                     <button type="button" @click="removePost(row.id)" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i></button>
@@ -154,6 +155,20 @@
                             </tr>
                             <tr v-if="isEmptyData(FilterPost)">
                                 <td colspan="10" class="text-danger text-center text-bold">Data Not Found!.</td>
+                            </tr>
+                            <tr v-if="selected.length > 0 ? true:false">
+                                <td colspan="10">
+                                    <div>
+                                        <button :disabled="!GetRenderAllPosts" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
+                                                data-toggle="dropdown" aria-expanded="false">Action
+                                        </button>
+                                        <div class="dropdown-menu" style="">
+                                            <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'active')">Active</button>
+                                            <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'inactive')">Inactive</button>
+                                            <button @click="removePost(selected)" class="dropdown-item">Delete</button>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -193,8 +208,8 @@ export default {
         }
     },
     watch: {
-        SelectAllTRUE() {
-            return this.SelectAll = (this.selected.length === this.GetRenderAllPosts.length);
+        selected(selected) {
+            this.SelectAll = (selected.length === this.GetRenderAllPosts.length)
         }
     },
     methods: {
@@ -265,10 +280,14 @@ export default {
         },
         ActiveInactiveItems(values, type) {
             const thiWindow = this;
-            axios.post('/post/status', { items: [values], type: type }).then(function (response) {
+            axios.post('/post/status', { items: values, type: type }).then(response => {
                 toastr.success(response.data.success);
+                //thiWindow.GetRenderAllPosts;
+                thiWindow.selected = [];
                 thiWindow.SelectAll = false;
+                thiWindow.GetRenderAllPosts;
                 thiWindow.$store.dispatch('RenderAllPost');
+
             });
         },
         isEmptyData(data) {

@@ -38,6 +38,7 @@ Route::post('/category/active', [CategoryController::class, 'Active']);
 // Post Route Define
 Route::prefix('/post')->group(function () {
     Route::post('/manage', [PostController::class, 'index']);
+    Route::post('/add-post', [PostController::class, 'store']);
     Route::post('/filter', [PostController::class, 'Filter_Post']);
     Route::post('/destroy', [PostController::class, 'Destroy']);
     Route::post('/status', [PostController::class, 'Status']);

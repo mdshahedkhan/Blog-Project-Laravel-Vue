@@ -15,9 +15,6 @@ export const Routes = [
     { path: "/update-category/:slug", name: "category_update", meta: { title: "Update Category" }, component: UpdateCategoryComponent },
 
     // POST Route Define
-    {
-        path: '/posts', name: "post.all", meta: {title: 'Manage All Post'}, component: ManagePostComponent,children: [
-            { path: '/post/add', name: "post.index", component: AddPostComponent},
-        ]
-    }
+    { path: '/posts', name: "post.all", meta: {title: 'Manage All Post'}, component: ManagePostComponent },
+    { path: "/add-post", name: "add-post", meta: {title: "Add New Post"}, component: AddPostComponent}
 ]

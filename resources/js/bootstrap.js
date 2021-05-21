@@ -33,6 +33,7 @@ try {
     });
     window.Swal = Swal
 
+
 } catch (e) {
 }
 
