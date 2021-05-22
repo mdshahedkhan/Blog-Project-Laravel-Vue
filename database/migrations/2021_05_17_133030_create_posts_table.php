@@ -19,7 +19,7 @@ class CreatePostsTable extends Migration
             $table->unsignedBigInteger('category_id');
             $table->string('title', 30);
             $table->string('slug')->unique();
-            $table->string('sub_title')->unique();
+            $table->string('sub_title', 60)->unique();
             $table->string('description', 500);
             $table->string('image', 255);
             $table->enum('status', ['active', 'inactive'])->default('active');

@@ -32,8 +32,6 @@ try {
         buttonsStyling: false
     });
     window.Swal = Swal
-
-
 } catch (e) {
 }
 

@@ -6,11 +6,28 @@ use App\Models\Post;
 use Exception;
 use Auth;
 use Illuminate\Http\Request;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class PostController extends Controller {
+
     public function index() {
         $Posts = Post::with('user', 'category')->orderBy('id', 'DESC')->get();
         return response()->json(['posts' => $Posts], 200);
+    }
+
+
+    public function RemoveRow(Request $request){
+        $i = 0;
+        foreach ($request->items as $key => $value) {
+            $Post = Post::find($value);
+            if ($Post->destroy($value)) {
+                if (file_exists(public_path('Uploades/post/'.$Post->image))) {
+                    unlink(public_path('Uploades/post/'.$Post->image));
+                }
+            }
+            $i++;
+        }
+        return response()->json(['success' => 'Yah! ' . $i . ' post has been successfully deleted.']);
     }
 
     // Advance Filtering
@@ -45,7 +62,12 @@ class PostController extends Controller {
         if ($request->items) {
             $i = 0;
             foreach ($request->items as $item) {
-                Post::destroy($item);
+                $Post = Post::find($item);
+                if ($Post->destroy($item)) {
+                    if (file_exists(public_path('Uploades/post/'.$Post->image))) {
+                        unlink(public_path('Uploades/post/'.$Post->image));
+                    }
+                };
                 $i++;
             }
             return response()->json(['success' => 'Yah! ' . $i . ' post has been successfully deleted.']);
@@ -67,7 +89,7 @@ class PostController extends Controller {
     public function store(Request $request) {
         $this->validate($request, [
             'category'    => "required",
-            'title'       => 'required|string|min:4|max:50|unique:posts',
+            'title'       => 'required|string|min:4|max:30|unique:posts',
             'sub_title'   => 'required|min:4|max:100|unique:posts',
             'thumbnail'   => 'required',
             'description' => 'required',
@@ -76,17 +98,22 @@ class PostController extends Controller {
         $extentionImage = explode('/', $exif_thumbnail[0]);
         try {
             $slug = slugify($request->title);
-            Post::create([
+            $fileName = $slug . '.' . $extentionImage[1];
+            $success = Post::create([
                 'create_by'   => auth()->user()->id,
                 'category_id' => $request->category,
                 'title'       => $request->title,
                 'sub_title'   => $request->sub_title,
                 'slug'        => $slug,
                 'description' => $request->description,
-                'image'       => $slug . '.' . $slug,
+                'image'       => $fileName,
                 'status'      => $request->status,
             ]);
-            return response()->json(['success' => 'Yah! Post has been successfully created.']);
+            if ($success) {
+                Image::make($request->thumbnail)->resize(500, 300)->save(public_path('Uploades/post/').$fileName);
+                return response()->json(['success' => 'Yah! Post has been successfully created.']);
+            }
+
         } catch (Exception $exception) {
             return $exception->getMessage();
         }

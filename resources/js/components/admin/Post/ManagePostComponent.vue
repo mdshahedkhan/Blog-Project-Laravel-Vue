@@ -104,7 +104,7 @@
                                     </div>
                                 </td>
                                 <td>{{ index + 1 }}</td>
-                                <td><img width="60px" :src="row.image" alt=""></td>
+                                <td><img width="60px" :src="viewFileLink(row.image)" :alt="row.title"></td>
                                 <td>{{ row.title }}</td>
                                 <td>{{ row.category.name }}</td>
                                 <td>{{ row.user.name }}</td>
@@ -118,16 +118,16 @@
                             <tr v-if="isEmptyData(GetRenderAllPosts)">
                                 <td colspan="10" class="text-danger text-center text-bold">Data Not Found!.</td>
                             </tr>
-                            <tr v-if="selected.length > 0 ? true:false">
+                            <tr v-if="SelectAll">
                                 <td colspan="10">
                                     <div>
                                         <button :disabled="!GetRenderAllPosts" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
                                                 data-toggle="dropdown" aria-expanded="false">Action
                                         </button>
-                                        <div class="dropdown-menu" style="">
+                                        <div class="dropdown-menu">
                                             <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'active')">Active</button>
                                             <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'inactive')">Inactive</button>
-                                            <button @click="removePost(selected)" class="dropdown-item">Delete</button>
+                                            <button @click="removePostMulti()" class="dropdown-item">Delete</button>
                                         </div>
                                     </div>
                                 </td>
@@ -142,7 +142,7 @@
                                     </div>
                                 </td>
                                 <td>{{ index + 1 }}</td>
-                                <td><img width="60px" :src="row.image" alt=""></td>
+                                <td><img width="60px" :src="viewFileLink(row.image)" alt=""></td>
                                 <td>{{ row.title }}</td>
                                 <td>{{ row.category.name }}</td>
                                 <td>{{ row.user.name }}</td>
@@ -156,7 +156,7 @@
                             <tr v-if="isEmptyData(FilterPost)">
                                 <td colspan="10" class="text-danger text-center text-bold">Data Not Found!.</td>
                             </tr>
-                            <tr v-if="selected.length > 0 ? true:false">
+                            <tr v-if="SelectAll">
                                 <td colspan="10">
                                     <div>
                                         <button :disabled="!GetRenderAllPosts" v-bind:disabled="selected.length < 1 ? true:false" type="button" class="btn btn-default dropdown-toggle btn-sm"
@@ -165,7 +165,7 @@
                                         <div class="dropdown-menu" style="">
                                             <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'active')">Active</button>
                                             <button class="dropdown-item" @click="ActiveInactiveItems(selected, 'inactive')">Inactive</button>
-                                            <button @click="removePost(selected)" class="dropdown-item">Delete</button>
+                                            <button @click="removePostMulti()" class="dropdown-item">Delete</button>
                                         </div>
                                     </div>
                                 </td>
@@ -193,6 +193,7 @@ export default {
             Search: null,
             orderBy: null,
             SelectAll: false,
+            base_Url: window.location.origin
         }
     },
     mounted() {
@@ -224,6 +225,16 @@ export default {
             const thiWindow = this
             this.confirm(function () {
                 axios.post('/post/destroy', { items: [id] }).then(function (response) {
+                    toastr.success(response.data.success);
+                    thiWindow.SelectAll = false;
+                    thiWindow.$store.dispatch('RenderAllPost');
+                });
+            });
+        },
+        removePostMulti() {
+            const thiWindow = this
+            this.confirm(function () {
+                axios.post('/post/destroy-row', { items: thiWindow.selected }).then(function (response) {
                     toastr.success(response.data.success);
                     thiWindow.SelectAll = false;
                     thiWindow.$store.dispatch('RenderAllPost');
@@ -289,6 +300,9 @@ export default {
                 thiWindow.$store.dispatch('RenderAllPost');
 
             });
+        },
+        viewFileLink(name){
+            return "Uploades/post/"+name;
         },
         isEmptyData(data) {
             return (data.length < 1);
